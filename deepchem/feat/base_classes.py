@@ -7,6 +7,7 @@ import multiprocessing
 from typing import Any, Dict, Iterable, Optional, Tuple, Union, cast
 
 import numpy as np
+import pandas as pd
 from deepchem.utils import get_print_threshold
 from deepchem.utils.typing import PymatgenStructure
 
