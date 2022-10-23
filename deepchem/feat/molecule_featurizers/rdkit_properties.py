@@ -1,18 +1,10 @@
+from deepchem.feat.base_classes import ParallelMolecularFeaturizer
+from deepchem.feat.molecule_featurizers import quantize
+from deepchem.utils.typing import RDKitMol
 from rdkit.Chem import Descriptors
 
-from descriptor_quantization import quantize
 
-"""
-Basic molecular features.
-"""
-
-from deepchem.feat.base_classes import MolecularFeaturizer
-from deepchem.utils.typing import RDKitMol
-
-from base_classes import MolecularFeaturizer
-
-
-class RDKitProperties(MolecularFeaturizer):
+class RDKitProperties(ParallelMolecularFeaturizer):
     """RDKit descriptors.
 
     This class computes a list of chemical descriptors like
