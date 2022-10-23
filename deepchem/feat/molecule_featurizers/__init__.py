@@ -13,6 +13,7 @@ from deepchem.feat.molecule_featurizers.maccs_keys_fingerprint import (
     MACCSKeysFingerprint,
 )
 from deepchem.feat.molecule_featurizers.mat_featurizer import MATFeaturizer
+from deepchem.feat.molecule_featurizers.meta_descriptors import MetaDescriptors
 from deepchem.feat.molecule_featurizers.mol2vec_fingerprint import Mol2VecFingerprint
 from deepchem.feat.molecule_featurizers.mol_graph_conv_featurizer import (
     MolGraphConvFeaturizer,
