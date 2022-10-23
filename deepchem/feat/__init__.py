@@ -34,6 +34,8 @@ from deepchem.feat.molecule_featurizers import SparseMatrixOneHotFeaturizer
 from deepchem.feat.molecule_featurizers import PubChemFingerprint
 from deepchem.feat.molecule_featurizers import RawFeaturizer
 from deepchem.feat.molecule_featurizers import RDKitDescriptors
+from deepchem.feat.molecule_featurizers import RDKitProperties
+from deepchem.feat.molecule_featurizers import MetaDescriptors
 from deepchem.feat.molecule_featurizers import SmilesToImage
 from deepchem.feat.molecule_featurizers import SmilesToSeq, create_char_to_idx
 from deepchem.feat.molecule_featurizers import MATFeaturizer

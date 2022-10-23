@@ -14,6 +14,7 @@ from deepchem.feat.molecule_featurizers.pubchem_fingerprint import PubChemFinger
 from deepchem.feat.molecule_featurizers.raw_featurizer import RawFeaturizer
 from deepchem.feat.molecule_featurizers.rdkit_descriptors import RDKitDescriptors
 from deepchem.feat.molecule_featurizers.rdkit_properties import RDKitProperties
+from deepchem.feat.molecule_featurizers.meta_descriptors import MetaDescriptors
 from deepchem.feat.molecule_featurizers.smiles_to_image import SmilesToImage
 from deepchem.feat.molecule_featurizers.smiles_to_seq import SmilesToSeq, create_char_to_idx
 from deepchem.feat.molecule_featurizers.mol_graph_conv_featurizer import MolGraphConvFeaturizer

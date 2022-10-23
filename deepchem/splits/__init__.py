@@ -17,6 +17,7 @@ from deepchem.splits.splitters import ScaffoldSplitter
 from deepchem.splits.splitters import MolecularWeightSplitter
 from deepchem.splits.splitters import MaxMinSplitter
 from deepchem.splits.splitters import FingerprintSplitter
+from deepchem.splits.splitters import SimilaritySplitter
 from deepchem.splits.splitters import ButinaSplitter
 
 # other splitter
