@@ -1,3 +1,4 @@
+import numpy as np
 from deepchem.feat.base_classes import ParallelMolecularFeaturizer
 from deepchem.feat.molecule_featurizers.descriptor_quantization import quantize
 from deepchem.utils.typing import RDKitMol
