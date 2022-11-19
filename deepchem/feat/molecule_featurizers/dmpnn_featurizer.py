@@ -48,7 +48,7 @@ class GraphConvConstants(object):
     # + 2 at end for is_in_aromatic
     # Hossam Ashtawy: there used to be another dim at the very end for atomic mass. It has been removed due
     # to (1) it is non-binary number unlike all other features, (2) correlates very strongly with atomic num
-    BOND_FDIM = 7
+    BOND_FDIM = 14
 
     # dictionary of available feature generators
     FEATURE_GENERATORS: Dict[str, MolecularFeaturizer] = {
@@ -256,7 +256,7 @@ def bond_features(bond: RDKitBond) -> Sequence[Union[bool, int, float]]:
         )
 
     else:
-        b_features = [0] + b_Feats(bond, use_extended_chirality=False)
+        b_features = [0] + b_Feats(bond, use_extended_chirality=True)
     return b_features
 
 

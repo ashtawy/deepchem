@@ -169,7 +169,7 @@ class GraphConvConstants(object):
      https://en.wikipedia.org/wiki/E%E2%80%93Z_notation"""
     possible_bond_stereo = ["STEREONONE", "STEREOANY", "STEREOZ", "STEREOE"]
     """Number of different bond types not counting stereochemistry."""
-    bond_fdim_base = 6
+    bond_fdim_base = 14
 
 
 def get_feature_list(atom):
@@ -466,7 +466,7 @@ def bond_features(bond, use_chirality=False, use_extended_chirality=False):
     >>> type(bond_features)
     <class 'numpy.ndarray'>
     >>> bond_features.shape
-    (6,)
+    (14,)
 
     Note
     ----
