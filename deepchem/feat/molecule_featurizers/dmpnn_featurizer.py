@@ -256,7 +256,7 @@ def bond_features(bond: RDKitBond) -> Sequence[Union[bool, int, float]]:
         )
 
     else:
-        b_features = [0] + b_Feats(bond, use_extended_chirality=True)
+        b_features = [0] + b_Feats(bond, use_extended_chirality=False)
     return b_features
 
 
