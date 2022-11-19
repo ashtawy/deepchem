@@ -7,6 +7,7 @@ import sys
 from typing import Any, Dict, List, Union
 
 import numpy as np
+
 from deepchem.feat.base_classes import ParallelMolecularFeaturizer
 from deepchem.feat.molecule_featurizers.circular_fingerprint import CircularFingerprint
 from deepchem.feat.molecule_featurizers.dmpnn_featurizer import DMPNNFeaturizer
@@ -79,7 +80,7 @@ class MetaDescriptors(ParallelMolecularFeaturizer):
             "ecfp": ecfp_def_params,
             "rdkit-descriptors": rdkit_def_params,
             "rdkit-properties": {},
-            "dmpnn": {"master_atom": True},
+            "dmpnn": {"master_atom": True, "only_atom_type": False},
             "maccs": {},
         }
         str2cls_map = {

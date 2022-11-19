@@ -2,6 +2,8 @@ import logging
 from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import numpy as np
+from rdkit import Chem
+
 from deepchem.feat.base_classes import MolecularFeaturizer
 from deepchem.feat.graph_data import GraphData
 from deepchem.feat.graph_features import bond_features as b_Feats
@@ -16,7 +18,6 @@ from deepchem.utils.molecule_feature_utils import (
     one_hot_encode,
 )
 from deepchem.utils.typing import RDKitAtom, RDKitBond, RDKitMol
-from rdkit import Chem
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ class GraphConvConstants(object):
     MAX_ATOMIC_NUM = 100
     ATOM_FEATURES: Dict[str, List[int]] = {
         "atomic_num": list(range(MAX_ATOMIC_NUM)),
+        "atom_type": ["C", "N", "O", "S", "F", "P", "Cl", "Br", "I"],
         "degree": [0, 1, 2, 3, 4, 5],
         "formal_charge": [-1, -2, 1, 2, 0],
         "chiral_tag": [0, 1, 2, 3],
@@ -83,6 +85,30 @@ def get_atomic_num_one_hot(
     return one_hot_encode(atom.GetAtomicNum() - 1, allowable_set, include_unknown_set)
 
 
+def get_atom_type_one_hot(
+    atom: RDKitAtom, allowable_set: List[int], include_unknown_set: bool = True
+) -> List[float]:
+    """Get a one-hot feature about atomic number of the given atom.
+
+    Parameters
+    ---------
+    atom: RDKitAtom
+      RDKit atom object
+    allowable_set: List[int]
+      The range of atomic numbers to consider.
+    include_unknown_set: bool, default False
+      If true, the index of all types not in `allowable_set` is `len(allowable_set)`.
+
+    Returns
+    -------
+    List[float]
+      A one-hot vector of atomic number of the given atom.
+      If `include_unknown_set` is False, the length is `len(allowable_set)`.
+      If `include_unknown_set` is True, the length is `len(allowable_set) + 1`.
+    """
+    return one_hot_encode(atom.GetSymbol(), allowable_set, include_unknown_set)
+
+
 def get_atom_chiral_tag_one_hot(
     atom: RDKitAtom, allowable_set: List[int], include_unknown_set: bool = True
 ) -> List[float]:
@@ -124,7 +150,7 @@ def get_atom_mass(atom: RDKitAtom) -> List[float]:
 
 
 def atom_features(
-    atom: RDKitAtom, functional_groups: List[int] = None, only_atom_num: bool = False
+    atom: RDKitAtom, functional_groups: List[int] = None, only_atom_type: bool = False
 ) -> Sequence[Union[bool, int, float]]:
     """Helper method used to compute atom feature vector.
 
@@ -137,8 +163,8 @@ def atom_features(
     functional_groups: List[int]
       A k-hot vector indicating the functional groups the atom belongs to.
       Default value is None
-    only_atom_num: bool
-      Toggle to build a feature vector for an atom containing only the atom number information.
+    only_atom_type: bool
+      Toggle to build a feature vector for an atom containing only the atom type information.
 
     Returns
     -------
@@ -161,19 +187,15 @@ def atom_features(
     if atom is None:
         features: Sequence[Union[bool, int, float]] = [0] * GraphConvConstants.ATOM_FDIM
 
-    elif only_atom_num:
-        features = []
-        features += get_atomic_num_one_hot(
-            atom, GraphConvConstants.ATOM_FEATURES["atomic_num"]
+    elif only_atom_type:
+        features = get_atom_type_one_hot(
+            atom, GraphConvConstants.ATOM_FEATURES["atom_type"]
         )
-        features += [0] * (
-            GraphConvConstants.ATOM_FDIM - GraphConvConstants.MAX_ATOMIC_NUM - 1
-        )  # set other features to zero
 
     else:
         features = []
-        features += get_atomic_num_one_hot(
-            atom, GraphConvConstants.ATOM_FEATURES["atomic_num"]
+        features += get_atom_type_one_hot(
+            atom, GraphConvConstants.ATOM_FEATURES["atom_type"]
         )
         features += get_atom_total_degree_one_hot(
             atom, GraphConvConstants.ATOM_FEATURES["degree"]
@@ -584,6 +606,7 @@ class DMPNNFeaturizer(MolecularFeaturizer):
 
     def __init__(
         self,
+        only_atom_type: bool = False,
         master_atom: bool = False,
         features_generators: Optional[List[str]] = None,
         is_adding_hs: bool = False,
@@ -592,6 +615,10 @@ class DMPNNFeaturizer(MolecularFeaturizer):
         """
         Parameters
         ----------
+        only_atom_type: bool, default False
+          Whether to use only one-hot-encoded atom type as feature vector
+        master_atom: bool, default False
+          Whether to include central atom connected to all other atoms
         features_generator: List[str], default None
           List of global feature generators to be used.
         is_adding_hs: bool, default False
@@ -599,6 +626,7 @@ class DMPNNFeaturizer(MolecularFeaturizer):
         use_original_atom_ranks: bool, default False
           Whether to use original atom mapping or canonical atom mapping
         """
+        self.only_atom_type = only_atom_type
         self.master_atom = master_atom
         self.features_generators = features_generators
         self.is_adding_hs = is_adding_hs
@@ -729,7 +757,11 @@ class DMPNNFeaturizer(MolecularFeaturizer):
 
         # get atom features
         f_atoms: np.ndarray = np.asarray(
-            [atom_features(atom) for atom in datapoint.GetAtoms()], dtype=bool
+            [
+                atom_features(atom, only_atom_type=self.only_atom_type)
+                for atom in datapoint.GetAtoms()
+            ],
+            dtype=bool,
         )
 
         # get edge(bond) features
