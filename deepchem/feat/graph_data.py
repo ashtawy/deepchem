@@ -1,6 +1,7 @@
 from typing import Optional, Sequence
 import numpy as np
-
+import torch
+from torch_geometric.data import Data
 
 class GraphData:
   """GraphData class
@@ -147,11 +148,13 @@ class GraphData:
       node_pos_features = torch.from_numpy(self.node_pos_features).float()
     kwargs = {}
     for key, value in self.kwargs.items():
-      kwargs[key] = torch.from_numpy(value).float()
+      if key != "global_features":
+        kwargs[key] = torch.from_numpy(value).float()
     return Data(x=torch.from_numpy(self.node_features).float(),
                 edge_index=torch.from_numpy(self.edge_index).long(),
                 edge_attr=edge_features,
                 pos=node_pos_features,
+                global_features=torch.from_numpy(self.global_features.reshape([1,-1])).float(),
                 **kwargs)
 
   def to_dgl_graph(self, self_loop: bool = False):
