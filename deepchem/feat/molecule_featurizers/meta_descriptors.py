@@ -112,7 +112,7 @@ class MetaDescriptors(ParallelMolecularFeaturizer):
                         f"ECFP_{i}" for i in range(def_params["ecfp"]["size"])
                     ]
                 elif ftype.lower() == "maccs":
-                    self.descriptors += [f"maccs_{i}" for i in range(166)]
+                    self.descriptors += [f"maccs_{i}" for i in range(167)]
                 elif ftype.lower() == "dmpnn":
                     pass
                 else:
