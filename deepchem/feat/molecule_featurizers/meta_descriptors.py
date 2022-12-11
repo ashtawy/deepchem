@@ -11,6 +11,7 @@ import numpy as np
 from deepchem.feat.base_classes import ParallelMolecularFeaturizer
 from deepchem.feat.molecule_featurizers.circular_fingerprint import CircularFingerprint
 from deepchem.feat.molecule_featurizers.dmpnn_featurizer import DMPNNFeaturizer
+from deepchem.feat.molecule_featurizers.frequent_subgraphs import FrequentSubgraphs
 from deepchem.feat.molecule_featurizers.maccs_keys_fingerprint import (
     MACCSKeysFingerprint,
 )
@@ -89,6 +90,7 @@ class MetaDescriptors(ParallelMolecularFeaturizer):
             "rdkit-properties": RDKitProperties,
             "dmpnn": DMPNNFeaturizer,
             "maccs": MACCSKeysFingerprint,
+            "frequent-subgraphs": FrequentSubgraphs,
         }
         self.descriptors = []
         self.featurizers = {}
