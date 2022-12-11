@@ -83,6 +83,7 @@ class MetaDescriptors(ParallelMolecularFeaturizer):
             "rdkit-properties": {},
             "dmpnn": {"master_atom": True, "only_atom_type": False},
             "maccs": {},
+            "frequent-subgraphs": {},
         }
         str2cls_map = {
             "ecfp": CircularFingerprint,
