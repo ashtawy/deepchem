@@ -1,8 +1,9 @@
 import numpy as np
+from rdkit.Chem import Descriptors
+
 from deepchem.feat.base_classes import ParallelMolecularFeaturizer
 from deepchem.feat.molecule_featurizers.descriptor_quantization import quantize
 from deepchem.utils.typing import RDKitMol
-from rdkit.Chem import Descriptors
 
 
 class RDKitProperties(ParallelMolecularFeaturizer):
@@ -89,7 +90,7 @@ class RDKitProperties(ParallelMolecularFeaturizer):
                     dnames = [f"{descriptor}_{i}" for i in range(n_buckets)]
                 else:
                     dnames = descriptor
-                self.descriptors += dnames
+                self.descriptors += [f"rdkit-properties_{dn}" for dn in dnames]
 
     def _featurize(self, datapoint: RDKitMol, **kwargs) -> np.ndarray:
         """

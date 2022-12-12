@@ -42,8 +42,9 @@ class FrequentSubgraphs(MolecularFeaturizer):
             for line in lines[1:]:
                 line = line.strip()
                 if len(line) > 1:
-                    self.descriptors.append(line.split(",")[0])
-        self.subgraphs = [Chem.MolFromSmarts(s) for s in self.descriptors]
+                    subgraph = line.split(",")[0]
+                    self.descriptors.append(f"frequent-subgraphs_{subgraph}")
+                    self.subgraphs.append(Chem.MolFromSmarts(subgraph))
 
     def _featurize(self, datapoint: RDKitMol, **kwargs) -> np.ndarray:
         if "mol" in kwargs:
