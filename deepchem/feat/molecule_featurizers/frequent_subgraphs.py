@@ -33,6 +33,7 @@ class FrequentSubgraphs(MolecularFeaturizer):
     def __init__(self, smarts_fname=None):
         """Initialize this featurizer."""
         self.descriptors = []
+        self.subgraphs = []
         if smarts_fname is None:
             smarts_fname = os.path.join(
                 os.path.dirname(__file__), "frequent_subgraphs.csv"
