@@ -15,12 +15,13 @@ from ast import literal_eval as make_tuple
 from multiprocessing.dummy import Pool
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Tuple, Union
 
-import deepchem as dc
 import numpy as np
 import pandas as pd
+from numpy.typing import ArrayLike
+
+import deepchem as dc
 from deepchem.utils.data_utils import load_from_disk, load_image_files, save_to_disk
 from deepchem.utils.typing import OneOrMany, Shape
-from numpy.typing import ArrayLike
 
 Batch = Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
 
@@ -907,7 +908,12 @@ class NumpyDataset(Dataset):
                 batch_size = n_samples
             for epoch in range(epochs):
                 if not deterministic:
-                    sample_perm = np.random.permutation(n_samples)
+                    # sample_perm = np.random.permutation(n_samples)
+                    p = dataset._w.sum(axis=1) if dataset._w.ndim == 2 else dataset._w
+                    p = p / p.sum()
+                    sample_perm = np.random.choice(
+                        n_samples, n_samples, replace=True, p=p
+                    )
                 batch_idx = 0
                 num_batches = math.ceil(n_samples / batch_size)
                 while batch_idx < num_batches:
