@@ -148,13 +148,20 @@ class GraphData:
       node_pos_features = torch.from_numpy(self.node_pos_features).float()
     kwargs = {}
     for key, value in self.kwargs.items():
-      if key != "global_features":
+      if key not in ["global_features", "target_global_features"]:
         kwargs[key] = torch.from_numpy(value).float()
+    if hasattr(self, "target_global_features"):
+        tg_features = torch.from_numpy(
+            self.target_global_features.reshape([1, -1])
+        ).float()
+    else:
+        tg_features = torch.tensor([[1]]).float()
     return Data(x=torch.from_numpy(self.node_features).float(),
                 edge_index=torch.from_numpy(self.edge_index).long(),
                 edge_attr=edge_features,
                 pos=node_pos_features,
                 global_features=torch.from_numpy(self.global_features.reshape([1,-1])).float(),
+                target_global_features=tg_features,
                 **kwargs)
 
   def to_dgl_graph(self, self_loop: bool = False):

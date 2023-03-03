@@ -190,7 +190,7 @@ class ComplexFeaturizer(Featurizer):
             datapoints = [cast(Tuple[str, str], datapoints)]
         features, failures, successes = [], [], []
         for idx, point in enumerate(datapoints):
-            if idx % log_every_n == 0:
+            if log_every_n > 0 and idx % log_every_n == 0:
                 logger.info("Featurizing datapoint %i" % idx)
             try:
                 features.append(self._featurize(point, **kwargs))
