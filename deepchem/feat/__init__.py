@@ -32,6 +32,7 @@ from deepchem.feat.complex_featurizers import (
     HydrogenBondVoxelizer,
     NeighborListAtomicCoordinates,
     NeighborListComplexAtomicCoordinates,
+    PCMFeaturizer,
     PiStackVoxelizer,
     RdkitGridFeaturizer,
     SaltBridgeVoxelizer,

@@ -12,6 +12,7 @@ from deepchem.feat.complex_featurizers.contact_fingerprints import ContactCircul
 from deepchem.feat.complex_featurizers.grid_featurizers import ChargeVoxelizer
 from deepchem.feat.complex_featurizers.grid_featurizers import SaltBridgeVoxelizer
 from deepchem.feat.complex_featurizers.grid_featurizers import CationPiVoxelizer
+from deepchem.feat.complex_featurizers.pcm_featurizers import PCMFeaturizer
 from deepchem.feat.complex_featurizers.grid_featurizers import PiStackVoxelizer
 from deepchem.feat.complex_featurizers.grid_featurizers import HydrogenBondVoxelizer
 from deepchem.feat.complex_featurizers.grid_featurizers import HydrogenBondCounter
