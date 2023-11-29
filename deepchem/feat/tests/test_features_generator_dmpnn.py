@@ -2,7 +2,7 @@
 Test for bond feature vector generator and reactions mapping
 """
 
-from deepchem.feat.molecule_featurizers.dmpnn_featurizer import bond_features, map_reac_to_prod
+from deepchem.feat.molecule_featurizers.mol_dmpnn_featurizer import bond_features, map_reac_to_prod
 from rdkit import Chem
 import pytest
 import numpy as np

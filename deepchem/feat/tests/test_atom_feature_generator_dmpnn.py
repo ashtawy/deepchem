@@ -2,7 +2,7 @@
 Test for atom feature vector generator and its helper functions
 """
 
-from deepchem.feat.molecule_featurizers.dmpnn_featurizer import get_atomic_num_one_hot, get_atom_chiral_tag_one_hot, get_atom_mass, atom_features, GraphConvConstants
+from deepchem.feat.molecule_featurizers.mol_dmpnn_featurizer import get_atomic_num_one_hot, get_atom_chiral_tag_one_hot, get_atom_mass, atom_features, GraphConvConstants
 from rdkit import Chem
 import pytest
 import numpy as np

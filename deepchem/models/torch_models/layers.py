@@ -1456,7 +1456,7 @@ class DMPNNEncoderLayer(nn.Module):
     super(DMPNNEncoderLayer, self).__init__()
 
     if use_default_fdim:
-      from deepchem.feat.molecule_featurizers.dmpnn_featurizer import GraphConvConstants
+      from deepchem.feat.molecule_featurizers.mol_dmpnn_featurizer import GraphConvConstants
       self.atom_fdim: int = GraphConvConstants.ATOM_FDIM
       self.concat_fdim: int = GraphConvConstants.ATOM_FDIM + GraphConvConstants.BOND_FDIM
     else:

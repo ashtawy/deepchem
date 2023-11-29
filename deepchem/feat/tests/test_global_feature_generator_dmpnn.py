@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from rdkit import Chem
-from deepchem.feat.molecule_featurizers.dmpnn_featurizer import generate_global_features
+from deepchem.feat.molecule_featurizers.mol_dmpnn_featurizer import generate_global_features
 
 
 class TestGlobalFeatureGenerator(unittest.TestCase):

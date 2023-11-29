@@ -7,20 +7,17 @@ from rdkit import Chem
 from deepchem.feat.base_classes import MolecularFeaturizer
 from deepchem.feat.graph_data import GraphData
 from deepchem.feat.graph_features import bond_features as b_Feats
-from deepchem.feat.molecule_featurizers.circular_fingerprint import CircularFingerprint
-from deepchem.feat.molecule_featurizers.rdkit_descriptors import RDKitDescriptors
+from deepchem.feat.molecule_featurizers.circular_fingerprint import \
+    CircularFingerprint
+from deepchem.feat.molecule_featurizers.rdkit_descriptors import \
+    RDKitDescriptors
 from deepchem.utils.molecule_feature_utils import (
-    get_atom_formal_charge_one_hot,
-    get_atom_hybridization_one_hot,
-    get_atom_is_in_aromatic_one_hot,
-    get_atom_total_degree_one_hot,
-    get_atom_total_num_Hs_one_hot,
-    one_hot_encode,
-)
+    get_atom_formal_charge_one_hot, get_atom_hybridization_one_hot,
+    get_atom_is_in_aromatic_one_hot, get_atom_total_degree_one_hot,
+    get_atom_total_num_Hs_one_hot, one_hot_encode)
 from deepchem.utils.typing import RDKitAtom, RDKitBond, RDKitMol
 
 logger = logging.getLogger(__name__)
-
 
 class GraphConvConstants(object):
     """
@@ -544,7 +541,7 @@ def generate_global_features(
     return global_features_array
 
 
-class DMPNNFeaturizer(MolecularFeaturizer):
+class MolDMPNNFeaturizer(MolecularFeaturizer):
     """
     This class is a featurizer for Directed Message Passing Neural Network (D-MPNN) implementation
 

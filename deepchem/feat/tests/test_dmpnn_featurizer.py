@@ -2,7 +2,7 @@
 Test for DMPNN Featurizer class.
 """
 
-from deepchem.feat.molecule_featurizers.dmpnn_featurizer import DMPNNFeaturizer, GraphConvConstants
+from deepchem.feat.molecule_featurizers.mol_dmpnn_featurizer import DMPNNFeaturizer, GraphConvConstants
 import numpy as np
 import pytest
 

@@ -1,4 +1,4 @@
-from deepchem.feat.molecule_featurizers.dmpnn_featurizer import _MapperDMPNN, GraphConvConstants, atom_features
+from deepchem.feat.molecule_featurizers.mol_dmpnn_featurizer import _MapperDMPNN, GraphConvConstants, atom_features
 from rdkit import Chem
 import numpy as np
 import unittest

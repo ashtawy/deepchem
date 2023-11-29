@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterable, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
+
 from deepchem.utils import get_print_threshold
 from deepchem.utils.typing import PymatgenStructure
 
@@ -195,9 +196,10 @@ class ComplexFeaturizer(Featurizer):
             try:
                 features.append(self._featurize(point, **kwargs))
                 successes.append(idx)
-            except:
+            except Exception as e:
+                message = f"Failed to featurize datapoint {idx}. Appending empty array. Exception message: {e}"
                 logger.warning(
-                    "Failed to featurize datapoint %i. Appending empty array." % idx
+                    message
                 )
                 features.append(np.zeros(1))
                 failures.append(idx)
@@ -228,7 +230,117 @@ class ComplexFeaturizer(Featurizer):
         """
         raise NotImplementedError("Featurizer is not defined.")
 
+class ParallelComplexFeaturizer(Featurizer):
+    """ "
+    Abstract class for calculating features for mol/protein complexes.
+    """
+    def __init__(self, use_original_atoms_order=False, n_threads=None):
+        """
+        Parameters
+        ----------
+        use_original_atoms_order: bool, default False
+          Whether to use original atom ordering or canonical ordering (default)
+        """
+        self.use_original_atoms_order = use_original_atoms_order
+        self.n_threads = n_threads
 
+    def featurize_(self, args) -> np.ndarray:
+        index, datapoints, log_every_n, kwargs = args
+        """
+        Calculate features for mol/protein complexes.
+
+        Parameters
+        ----------
+        datapoints: Iterable[Tuple[str, str]]
+          List of filenames (PDB, SDF, etc.) for ligand molecules and proteins.
+          Each element should be a tuple of the form (ligand_filename,
+          protein_filename).
+
+        Returns
+        -------
+        features: np.ndarray
+          Array of features
+        """
+
+
+        if "complexes" in kwargs:
+            datapoints = kwargs.get("complexes")
+            raise DeprecationWarning(
+                'Complexes is being phased out as a parameter, please pass "datapoints" instead.'
+            )
+
+
+        features: list = []
+        for i, datapoint in enumerate(datapoints):
+            if i % log_every_n == 0:
+                logger.info("Featurizing datapoint %i" % i)
+
+            try:
+                kwargs_per_datapoint = {}
+                for key in kwargs.keys():
+                    kwargs_per_datapoint[key] = kwargs[key][i]
+                features.append(self._featurize(datapoint, **kwargs_per_datapoint))
+            except Exception as e:
+                logger.warning(
+                    f"Failed to featurize datapoint {i}. Appending empty array. Exception message: {e}")
+                features.append(np.array([]))
+        # features = pd.DataFrame(data=np.asarray(features), index=index)
+        return features, index
+
+    def featurize(
+        self, datapoints, log_every_n=1000, n_threads=None, step_size=5000, **kwargs
+    ) -> np.ndarray:
+        n_threads = self.n_threads if n_threads is None else n_threads
+        n_threads = max(n_threads, 1) if n_threads is not None else 1
+        if n_threads > 1 and len(datapoints) >= n_threads:
+            max_steps = len(datapoints)
+            features = []
+            # pickling smaller datasets is much faster than pickling larg ones
+            for i, from_i in enumerate(range(0, max_steps, step_size)):
+                to_i = min(max_steps, from_i + step_size)
+
+                if isinstance(datapoints, pd.Series):
+                    # to list conversion is used to prevent a deprecated series[i:j] used downstream on this data
+                    datapoints_i = datapoints.iloc[from_i:to_i].tolist()
+                else:
+                    datapoints_i = datapoints[from_i:to_i]
+
+                proc = multiprocessing.Pool(n_threads)
+                datapoints_chunks = np.array_split(datapoints_i, n_threads)
+                datapoints_idxs = np.array_split(np.arange(len(datapoints_i)), n_threads)
+
+                kwargs_list = [kwargs] * n_threads
+                log_e_n_list = [log_every_n] * n_threads
+                args = list(zip(datapoints_idxs, datapoints_chunks, log_e_n_list, kwargs_list))
+
+                features_and_indices = proc.map(self.featurize_, args)
+                proc.terminate()
+                proc.join()
+                features_chunk = []
+                idxs = []
+                for features_, index_ in features_and_indices:
+                    features_chunk += features_
+                    idxs.append(index_)
+                idxs = np.concatenate(idxs)
+                features += [f for _, f in sorted(zip(idxs, features_chunk))]
+                msg = f"Finished featurizing chunk #{i} [{from_i}:{to_i}) of size {len(features)}/{max_steps}"
+                logging.info(msg)
+        else:
+            args = [np.arange(len(datapoints)), datapoints, log_every_n, kwargs]
+            features, _ = self.featurize_(args)
+        return np.asarray(features)
+    
+    def _featurize(self, datapoint: Optional[Tuple[str, str]] = None, **kwargs):
+        """
+        Calculate features for single mol/protein complex.
+
+        Parameters
+        ----------
+        complex: Tuple[str, str]
+          Filenames for molecule and protein.
+        """
+        raise NotImplementedError("Featurizer is not defined.")
+    
 class ParallelMolecularFeaturizer(Featurizer):
     """Abstract class for calculating a set of features for a
     molecule.

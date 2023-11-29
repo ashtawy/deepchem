@@ -9,13 +9,16 @@ from typing import Any, Dict, List, Union
 import numpy as np
 
 from deepchem.feat.base_classes import ParallelMolecularFeaturizer
-from deepchem.feat.molecule_featurizers.circular_fingerprint import CircularFingerprint
-from deepchem.feat.molecule_featurizers.dmpnn_featurizer import DMPNNFeaturizer
-from deepchem.feat.molecule_featurizers.frequent_subgraphs import FrequentSubgraphs
-from deepchem.feat.molecule_featurizers.maccs_keys_fingerprint import (
-    MACCSKeysFingerprint,
-)
-from deepchem.feat.molecule_featurizers.rdkit_descriptors import RDKitDescriptors
+from deepchem.feat.molecule_featurizers.circular_fingerprint import \
+    CircularFingerprint
+from deepchem.feat.molecule_featurizers.frequent_subgraphs import \
+    FrequentSubgraphs
+from deepchem.feat.molecule_featurizers.maccs_keys_fingerprint import \
+    MACCSKeysFingerprint
+from deepchem.feat.molecule_featurizers.mol_dmpnn_featurizer import \
+    MolDMPNNFeaturizer
+from deepchem.feat.molecule_featurizers.rdkit_descriptors import \
+    RDKitDescriptors
 from deepchem.feat.molecule_featurizers.rdkit_properties import RDKitProperties
 from deepchem.utils.typing import RDKitMol
 
@@ -89,7 +92,7 @@ class MetaDescriptors(ParallelMolecularFeaturizer):
             "ecfp": CircularFingerprint,
             "rdkit-descriptors": RDKitDescriptors,
             "rdkit-properties": RDKitProperties,
-            "dmpnn": DMPNNFeaturizer,
+            "dmpnn": MolDMPNNFeaturizer,
             "maccs": MACCSKeysFingerprint,
             "frequent-subgraphs": FrequentSubgraphs,
         }
