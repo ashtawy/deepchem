@@ -13,14 +13,16 @@ import tempfile
 import time
 from ast import literal_eval as make_tuple
 from multiprocessing.dummy import Pool
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Tuple, Union
+from typing import (Any, Dict, Iterable, Iterator, List, Optional, Sequence,
+                    Tuple, Union)
 
 import numpy as np
 import pandas as pd
 from numpy.typing import ArrayLike
 
 import deepchem as dc
-from deepchem.utils.data_utils import load_from_disk, load_image_files, save_to_disk
+from deepchem.utils.data_utils import (load_from_disk, load_image_files,
+                                       save_to_disk)
 from deepchem.utils.typing import OneOrMany, Shape
 
 Batch = Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
@@ -198,7 +200,12 @@ def pad_batch(
     else:
         w_out = np.zeros((batch_size,) + w_b.shape[1:], dtype=w_b.dtype)
 
-    ids_out = np.zeros((batch_size,), dtype=ids_b.dtype)
+    if ids_b is None:
+        ids_out = None
+    elif len(ids_b.shape) < 2:
+        ids_out = np.zeros(batch_size, dtype=ids_b.dtype)
+    else:
+        ids_out = np.zeros((batch_size,) + ids_b.shape[1:], dtype=ids_b.dtype)
 
     # Fill in batch arrays
     start = 0
@@ -216,8 +223,8 @@ def pad_batch(
 
         if y_out is not None:
             y_out[start : start + increment] = y_b[:increment]
-
-        ids_out[start : start + increment] = ids_b[:increment]
+        if ids_out is not None:
+            ids_out[start : start + increment] = ids_b[:increment]
         start += increment
 
     return (X_out, y_out, w_out, ids_out)
@@ -1260,6 +1267,7 @@ class DiskDataset(Dataset):
         logger.info("Loading dataset from disk.")
         tasks, self.metadata_df = self.load_metadata()
         self.tasks = np.array(tasks)
+        self._y_idxs = None
         if len(self.metadata_df.columns) == 4 and list(self.metadata_df.columns) == [
             "ids",
             "X",
@@ -2325,6 +2333,8 @@ class DiskDataset(Dataset):
             y: Optional[np.ndarray] = np.array(
                 load_from_disk(os.path.join(self.data_dir, row["y"]))
             )
+            if self._y_idxs is not None and y is not None:
+                y = y[:, self._y_idxs]
         else:
             y = None
 
@@ -2340,6 +2350,8 @@ class DiskDataset(Dataset):
                     w = np.ones((y.shape[0], 1), np.float32)
             else:
                 w = None
+            if w is not None and self._y_idxs is not None:
+                w = w[:, self._y_idxs]
         else:
             w = None
 
@@ -2725,6 +2737,15 @@ class DiskDataset(Dataset):
         self._memory_cache_size = size
         if self._cache_used > size:
             self._cached_shards = None
+    @property
+    def y_idxs(self) -> int:
+        """Get the y_idxs for this dataset."""
+        return self._y_idxs
+    
+    @y_idxs.setter
+    def y_idxs(self, idxs: List[int]) -> None:
+        """Set the y_idxs for this dataset."""
+        self._y_idxs = idxs
 
     def __len__(self) -> int:
         """Finds number of elements in dataset."""

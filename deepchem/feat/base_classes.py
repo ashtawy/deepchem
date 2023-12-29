@@ -292,6 +292,7 @@ class ParallelComplexFeaturizer(Featurizer):
     ) -> np.ndarray:
         n_threads = self.n_threads if n_threads is None else n_threads
         n_threads = max(n_threads, 1) if n_threads is not None else 1
+        datapoints = datapoints.values if isinstance(datapoints, pd.DataFrame) else datapoints
         if n_threads > 1 and len(datapoints) >= n_threads:
             max_steps = len(datapoints)
             features = []

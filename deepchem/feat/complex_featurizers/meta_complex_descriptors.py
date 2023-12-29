@@ -169,7 +169,9 @@ class MetaComplexDescriptors(ParallelComplexFeaturizer):
 
     def __init__(
         self,
-        descriptor_sets: Dict[str, Any] = {"cdmpnn": None, "binana": None},
+        descriptor_sets: Dict[str, Any] = {"dcdmpnn": {"distance_threshold": 6, 
+                                                      "distance_step_size": 0.25, 
+                                                      "discrete_distance_filter":True}},
         n_threads=None,
     ):
         """Initialize this featurizer.
@@ -188,20 +190,27 @@ class MetaComplexDescriptors(ParallelComplexFeaturizer):
             "xscore": xscore_def_params,
             "rfscore": rfscore_def_params,
             "binana": {},
-            "cdmpnn": {},
+            "dcdmpnn": {"distance_threshold": 6, "distance_step_size": 0.25, "discrete_distance_filter":True},
+            "ccdmpnn": {"distance_threshold": 6, "distance_step_size": 0.25, "discrete_distance_filter":False},
         }
-        str2cls_map = ["xscore", "rfscore", "binana", "cdmpnn"]
+        str2cls_map = {
+            "binana": binana,
+            "dcdmpnn": ComplexDMPNNFeaturizer,
+            "ccdmpnn": ComplexDMPNNFeaturizer,
+        }
         self.descriptors = []
-        self.featurizers = descriptor_sets
+        self.featurizers = {}
         self.dtype = bool
         for ftype, fparams in descriptor_sets.items():
-            self.dtype = np.float32
-                
-            if ftype not in str2cls_map:
+            ftype = ftype.lower()
+            if ftype in str2cls_map:
+                if fparams is None:
+                    fparams = def_params[ftype]
+                self.featurizers[ftype] = str2cls_map[ftype](**fparams)
+            else:
                 raise ValueError(
                     f"Feature type of {ftype} is not supported. Supported types are {list(str2cls_map)}"
                 )
-
     def calc_descriptors(self, descriptor_type, protein_path, ligand_path):
         pid = os.getpid()
         pipe_name = f'/tmp/my_pipe_{pid}_{uuid.uuid4()}'
@@ -268,24 +277,24 @@ class MetaComplexDescriptors(ParallelComplexFeaturizer):
         """
         features: List[Union[int, float]] = []
         graph_features = None
-        for featurizer_name, featurizer_configs in self.featurizers.items():
+        for featurizer_name, featurizer in self.featurizers.items():
             if featurizer_name == "binana":
                 try:
-                    features_subset = binana(datapoint[0], datapoint[1], "\t", False)
+                    features_subset = featurizer.featurize(datapoint[0], datapoint[1], "\t", False)
                     features_subset = list(features_subset.features.values())
                 except Exception as e:
                     message = (f"Error when running binana on datapoint: {datapoint} {e}")
                     logger.error(message)
                     raise ValueError(message)
                     features_subset = None
-            elif featurizer_name == "cdmpnn":
-                features_subset = ComplexDMPNNFeaturizer().featurize([datapoint])[0]
+            elif featurizer_name in ["dcdmpnn", "ccdmpnn"]:
+                features_subset = featurizer.featurize([datapoint])[0]
             else:
                 features_subset = self.calc_descriptors(featurizer_name, datapoint[0], datapoint[1])
 
             if features_subset is not None:
                 # and (isinstance() and np.isnan(features_subset).sum() == 0):
-                if featurizer_name in ["cdmpnn"]:
+                if featurizer_name in ["ccdmpnn", "dcdmpnn"]:
                     graph_features = features_subset
                 else:
                     features.append(features_subset)

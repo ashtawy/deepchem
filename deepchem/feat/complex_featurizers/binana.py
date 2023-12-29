@@ -12,6 +12,7 @@ import os
 import subprocess
 import textwrap
 import time
+from typing import Any
 
 MGLTOOLS_PATH = "/software/mgltools_x86_64Linux2_1.5.7"
 
@@ -1625,7 +1626,9 @@ class binana:
         return string
 
     # The meat of the class
-    def __init__(self, receptor, ligand, line_header, verbose=False): # must be a more elegant way of doing this
+    def __init__(self, verbose=False):
+        self.verbose = verbose
+    def featurize(self, receptor, ligand, line_header, verbose=False): # must be a more elegant way of doing this
         self.verbose = verbose
         if isinstance(receptor, PDB):
             receptor_pdbqt_filename = receptor.OrigFileName

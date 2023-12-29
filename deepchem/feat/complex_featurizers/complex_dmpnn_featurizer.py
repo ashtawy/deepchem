@@ -8,6 +8,7 @@ import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import SDMolSupplier
 from rdkit.Chem.rdmolfiles import MolFromMol2File, MolFromPDBFile
+from scipy.spatial import distance
 
 from deepchem.feat.base_classes import ComplexFeaturizer
 from deepchem.feat.graph_data import GraphData
@@ -36,12 +37,17 @@ def load_gnina_type(path, object_type='ligand'):
         features = np.concatenate([np.ones([features.shape[0], 1]), features], axis=1)
     return {"node_features": features, "node_positions": positions}
 
-def get_inter_bonds(ligand_graph, protein_graph, distance_threshold=5):
+def get_inter_bonds(ligand_graph,
+                    protein_graph,
+                    distance_threshold=8,
+                    distance_step_size=0.25,
+                    discrete_distance_filter=True):
     points_l = ligand_graph["node_positions"]
     points_p = protein_graph["node_positions"]
     # Compute the pairwise distance
-    diff = points_l[:, np.newaxis, :] - points_p[np.newaxis, :, :]
-    distances = np.sqrt(np.sum(diff**2, axis=-1))
+    #diff = points_l[:, np.newaxis, :] - points_p[np.newaxis, :, :]
+    #distances = np.sqrt(np.sum(diff**2, axis=-1))
+    distances = distance.cdist(points_l, points_p, 'euclidean')
     valid_protein_idxs = np.any(distances <= distance_threshold+1, axis=0)
     points_p = points_p[valid_protein_idxs]
 
@@ -49,18 +55,28 @@ def get_inter_bonds(ligand_graph, protein_graph, distance_threshold=5):
 
 
     # Compute the pairwise distance
-    diff = points_lp[:, np.newaxis, :] - points_lp[np.newaxis, :, :]
-    distances = np.sqrt(np.sum(diff**2, axis=-1))
+    #diff = points_lp[:, np.newaxis, :] - points_lp[np.newaxis, :, :]
+    #distances = np.sqrt(np.sum(diff**2, axis=-1))
+    distances = distance.cdist(points_lp, points_lp, 'euclidean')
     filtered_distances = (distances > 0.0) & (distances <= distance_threshold)
     close_points_indices = np.argwhere(filtered_distances)
     #close_points_indices[:, 1] = close_points_indices[:, 1] + ligand_graph["num_nodes"]
     intermolecular_bonds = np.zeros([close_points_indices.shape[0]*2, 2], dtype=np.int64)
     intermolecular_bonds[::2, :] = close_points_indices
     intermolecular_bonds[1::2, :] = close_points_indices[:, [1, 0]]
-    weight = np.repeat(distances[filtered_distances], 2).reshape([-1, 1])
-    step = 0.2
-    alphas = np.arange(0, distance_threshold+step, step)
-    weight = np.exp(-10*(weight - alphas)**2).T
+    weight = np.repeat(distances[filtered_distances], 2)
+    if discrete_distance_filter:
+        n_steps = int(1/distance_step_size)
+        dist = weight
+        ndist = np.round(dist * n_steps).astype(int)
+        max_dist = n_steps * distance_threshold
+        ohe = np.zeros((len(dist), max_dist+1))
+        ohe[np.arange(len(dist)), ndist] = 1
+        weight = ohe.T
+    else:
+        alphas = np.arange(0, distance_threshold+distance_step_size, distance_step_size)
+        weight = np.exp(-10*(weight.reshape([-1, 1]) - alphas)**2).T
+    
     return valid_protein_idxs, intermolecular_bonds.T, weight
 
 def protein_to_graph(protein):
@@ -86,13 +102,15 @@ def ligand_to_graph(ligand):
     node_positions = c.GetPositions()
     return {"node_features": node_features, "node_positions": node_positions}
 
-def covalent_and_intermolecular_interactions_graph(ligand_graph, protein_graph, distance_threshold):
-    valid_protein_index, intermolecular_edge_index, intermolecular_edge_weight = get_inter_bonds(ligand_graph,
-                                                                                                 protein_graph,
-                                                                                                 distance_threshold)
-    if len(intermolecular_edge_weight) == 0:
-        intermolecular_edge_index = np.empty((2, 0), dtype = np.int64)
-        intermolecular_edge_weight = np.empty((1, 0), dtype = np.float64)
+def get_interactions_graph(ligand_graph, protein_graph, distance_threshold, distance_step_size, discrete_distance_filter):
+    valid_protein_index, edge_index, edge_weight = get_inter_bonds(ligand_graph,
+                                                                   protein_graph,
+                                                                    distance_threshold,
+                                                                    distance_step_size,
+                                                                    discrete_distance_filter)
+    if len(edge_weight) == 0:
+        edge_index = np.empty((2, 0), dtype = np.int64)
+        edge_weight = np.empty((1, 0), dtype = np.float64)
     protein_node_features = protein_graph["node_features"][valid_protein_index]
     ligand_node_features = ligand_graph["node_features"]
     node_features = np.concatenate([ligand_node_features, protein_node_features], axis = 0)
@@ -100,11 +118,11 @@ def covalent_and_intermolecular_interactions_graph(ligand_graph, protein_graph, 
     # protein_node_positions = protein_graph["node_positions"][valid_protein_index]
     # ligand_node_positions = ligand_graph["node_positions"]
     # node_positions = np.concatenate([ligand_node_positions, protein_node_positions], axis = 0)
-
+    edge_dtype = bool if discrete_distance_filter else np.float32
     return GraphData(
-        node_features=node_features,
-        edge_index=intermolecular_edge_index,
-        edge_features=intermolecular_edge_weight.T,
+        node_features=node_features.astype(bool),
+        edge_index=edge_index,
+        edge_features=edge_weight.astype(edge_dtype).T,
         global_features=np.empty(0),
     )
 class ComplexDMPNNFeaturizer(ComplexFeaturizer):
@@ -169,7 +187,9 @@ class ComplexDMPNNFeaturizer(ComplexFeaturizer):
 
     def __init__(
         self,
-        distance_threshold=5,
+        distance_threshold=8,
+        distance_step_size=0.25, 
+        discrete_distance_filter=True,
         only_atom_type: bool = False,
         master_atom: bool = False,
         features_generators: Optional[List[str]] = None,
@@ -191,6 +211,8 @@ class ComplexDMPNNFeaturizer(ComplexFeaturizer):
           Whether to use original atom mapping or canonical atom mapping
         """
         self.distance_threshold = distance_threshold
+        self.distance_step_size = distance_step_size
+        self.discrete_distance_filter = discrete_distance_filter
         self.only_atom_type = only_atom_type
         self.master_atom = master_atom
         self.features_generators = features_generators
@@ -350,7 +372,11 @@ class ComplexDMPNNFeaturizer(ComplexFeaturizer):
                 protein_graph = protein_to_graph(receptor)
             elif receptor_extension in ["gninatype", "gninatypes", "parquet"]:
                 protein_graph = load_gnina_type(ligand_structure_file_path, object_type='protein')
-            graph = covalent_and_intermolecular_interactions_graph(ligand_graph, protein_graph, self.distance_threshold)
+            graph = get_interactions_graph(ligand_graph,
+                                           protein_graph,
+                                           self.distance_threshold,
+                                           self.distance_step_size,
+                                           self.discrete_distance_filter)
         else:
             raise ValueError(f"Could not find {receptor_structure_file_path} or {ligand_structure_file_path}")
         return graph
