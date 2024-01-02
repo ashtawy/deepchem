@@ -1,1 +1,4 @@
 include deepchem/feat/molecule_featurizers/frequent_subgraphs.csv
+include deepchem/feat/complex_featurizers/bin
+recursive-include deepchem/feat/complex_featurizers/bin *
+recursive-include deepchem/feat/complex_featurizers/bin/parameter *

@@ -14,6 +14,10 @@ import textwrap
 import time
 from typing import Any
 
+from meeko import MoleculePreparation, PDBQTWriterLegacy
+from rdkit import Chem
+from rdkit.Chem import SDMolSupplier
+
 MGLTOOLS_PATH = "/software/mgltools_x86_64Linux2_1.5.7"
 
 def ligand_to_pdbqt(ligand_file_name, ligand_pdbqt_file_name, overwrite=False):
@@ -26,25 +30,29 @@ def ligand_to_pdbqt(ligand_file_name, ligand_pdbqt_file_name, overwrite=False):
     env_vars['PYTHONPATH'] = f"{MGLTOOLS_PATH}/MGLToolsPckgs/:{env_vars['PYTHONPATH']}"
     env_vars['PATH'] = f"{env_vars['PATH']}:{MGLTOOLS_PATH}/bin"
     env_vars['PATH'] = f"{env_vars['PATH']}:{MGLTOOLS_PATH}/MGLToolsPckgs/AutoDockTools/Utilities24"
+    print(f"I am about to convert ligand from pdb/mol2/sdf to the PDBQT format using prepare_ligand4.py:"
+          f"\n{ligand_file_name}\n{ligand_pdbqt_file_name}")
     if not os.path.exists(ligand_pdbqt_file_name) or overwrite:
         try:
             # execute the following command and get the std output and std error
             conv_path = f"{MGLTOOLS_PATH}/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_ligand4.py"
             python_path = "/home/hashtawy/.conda/envs/autodock_tools/bin/python"
             command = f"{python_path} {conv_path} -l {ligand_file_name} -o {ligand_pdbqt_file_name}"
+            print(command)
             output = subprocess.run(command,
                                 env = env_vars, 
                                 stdout=subprocess.PIPE, 
                                 stderr=subprocess.PIPE,
                                 shell=True)
-            # print(output.stdout.decode('utf-8'))
-            # print(output.stderr.decode('utf-8'))
-        except:
-            print(f"Could not convert ligand from pdb/mol2/sdf to the PDBQT format using prepare_ligand4.py: {ligand_file_name}")
-            #try:
-            #    subprocess.call(["obabel", ligand_file_name, f"-O{ligand_pdbqt_file_name}"])
-            #except:
-            #    print(f"Could not convert ligand from pdb/mol2/sdf to the PDBQT format using obabel: {ligand_file_name}")
+            #print(output.stdout.decode('utf-8'))
+            #print(output.stderr.decode('utf-8'))
+        except Exception as E:
+            print(f"Could not convert ligand from pdb/mol2/sdf to the PDBQT format using prepare_ligand4.py: {ligand_file_name}. {E}")
+        if not os.path.exists(ligand_pdbqt_file_name):
+            try:
+                subprocess.call(["obabel", ligand_file_name, f"-O{ligand_pdbqt_file_name}"])
+            except:
+                print(f"Could not convert ligand from pdb/mol2/sdf to the PDBQT format using obabel: {ligand_file_name}")
     return os.path.exists(ligand_pdbqt_file_name)
 
 def receptor_to_pdbqt(receptor_file_name, receptor_pdbqt_file_name, overwrite=False):
@@ -315,6 +323,15 @@ class atom:
         self.chain = Line[21:22]
         if self.residue.strip() == "": self.residue = " MOL"
 
+def sdf_to_pdbqt_lines(sdf_path):
+    # there is one molecule in this SD file, this loop iterates just once
+    for mol in Chem.SDMolSupplier(sdf_path, removeHs=False):
+        preparator = MoleculePreparation()
+        mol_setups = preparator.prepare(mol)
+        for setup in mol_setups:
+            pdbqt_string = PDBQTWriterLegacy.write_string(setup)
+    return pdbqt_string[0].split("\n")
+
 class PDB:
 
     def __init__ (self, verbose=True):
@@ -353,7 +370,7 @@ class PDB:
 
         atom_already_loaded = [] # going to keep track of atomname_resid_chain pairs, to make sure redundants aren't loaded. This basically
                                  # gets rid of rotomers, I think.
-
+        
         for t in range(0,len(lines)):
             line=lines[t]
 
@@ -1654,14 +1671,21 @@ class binana:
             base_name, extension = os.path.splitext(ligand)
             if extension == ".pdbqt":
                 ligand_pdbqt_filename = ligand
+            elif extension == ".sdf":
+                #mol = next(SDMolSupplier(ligand, removeHs=False))
+                #pdb_block = Chem.MolToPDBBlock(mol).split("\n")
+                pdb_block = sdf_to_pdbqt_lines(ligand)
             else:
                 ligand_pdbqt_filename = ligand.replace(extension, ".pdbqt")
                 ligand_to_pdbqt(ligand, ligand_pdbqt_filename)
-            if os.path.exists(ligand_pdbqt_filename) is False:
+            if extension != ".sdf" and os.path.exists(ligand_pdbqt_filename) is False:
                 raise ValueError("The ligand PDBQT file " + ligand_pdbqt_filename + " does not exist.")
 
             ligand = PDB(self.verbose)
-            ligand.LoadPDB_from_file(ligand_pdbqt_filename, line_header, verbose=self.verbose)
+            if extension == ".sdf":
+                ligand.LoadPDB_from_list(pdb_block, line_header, verbose=True)# verbose=self.verbose)
+            else:
+                ligand.LoadPDB_from_file(ligand_pdbqt_filename, line_header, verbose=self.verbose)
 
         # Get distance measurements between protein and ligand atom types, as well as some other measurements
 

@@ -16,12 +16,14 @@ from deepchem.feat.binding_pocket_features import BindingPocketFeaturizer
 # complex featurizers
 from deepchem.feat.complex_featurizers import (
     AtomicConvFeaturizer, CationPiVoxelizer, ChargeVoxelizer,
-    ComplexDMPNNFeaturizer, ComplexNeighborListFragmentAtomicCoordinates,
+    ComplexCyscoreFeaturizer, ComplexDMPNNFeaturizer,
+    ComplexNeighborListFragmentAtomicCoordinates, ComplexRFScoreFeaturizer,
+    ComplexSminaFeaturizer, ComplexXScoreFeaturizer,
     ContactCircularFingerprint, ContactCircularVoxelizer, HydrogenBondCounter,
     HydrogenBondVoxelizer, MetaComplexDescriptors,
     NeighborListAtomicCoordinates, NeighborListComplexAtomicCoordinates,
     PCMFeaturizer, PiStackVoxelizer, RdkitGridFeaturizer, SaltBridgeVoxelizer,
-    SplifFingerprint, SplifVoxelizer)
+    SplifFingerprint, SplifVoxelizer, binana)
 from deepchem.feat.graph_data import GraphData
 from deepchem.feat.graph_features import ConvMolFeaturizer, WeaveFeaturizer
 # material featurizers

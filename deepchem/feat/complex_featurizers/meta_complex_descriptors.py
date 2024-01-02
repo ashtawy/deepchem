@@ -16,13 +16,21 @@ import numpy as np
 
 from deepchem.feat.base_classes import ParallelComplexFeaturizer
 from deepchem.feat.complex_featurizers.binana import binana
+from deepchem.feat.complex_featurizers.complex_cyscore_featurizer import \
+    ComplexCyscoreFeaturizer
 from deepchem.feat.complex_featurizers.complex_dmpnn_featurizer import \
     ComplexDMPNNFeaturizer
+from deepchem.feat.complex_featurizers.complex_rfscore_featurizer import \
+    ComplexRFScoreFeaturizer
+from deepchem.feat.complex_featurizers.complex_smina_featurizer import \
+    ComplexSminaFeaturizer
+from deepchem.feat.complex_featurizers.complex_xscore_featurizer import \
+    ComplexXScoreFeaturizer
 
 logger = logging.getLogger(__name__)
 
 FEATURIZERS_PATH = "/software/featurizers/"
-
+SMINA_PATH = "/software/smina/smina.static"
 
 def isNumber(s):
     try:
@@ -182,25 +190,28 @@ class MetaComplexDescriptors(ParallelComplexFeaturizer):
           A dictionary with the feature types to calcualte along with their configurations
         """
         super().__init__(n_threads=n_threads)
-        xscore_def_params = {
-        }
-        rfscore_def_params = {
-        }
         def_params = {
-            "xscore": xscore_def_params,
-            "rfscore": rfscore_def_params,
+            "xscore": {},
+            "rfscore": {},
+            "cyscore": {},
             "binana": {},
             "dcdmpnn": {"distance_threshold": 6, "distance_step_size": 0.25, "discrete_distance_filter":True},
             "ccdmpnn": {"distance_threshold": 6, "distance_step_size": 0.25, "discrete_distance_filter":False},
+            "smina": {"smina_executable_path": SMINA_PATH},
+
         }
         str2cls_map = {
             "binana": binana,
             "dcdmpnn": ComplexDMPNNFeaturizer,
             "ccdmpnn": ComplexDMPNNFeaturizer,
+            "smina": ComplexSminaFeaturizer,
+            "xscore": ComplexXScoreFeaturizer,
+            "rfscore": ComplexRFScoreFeaturizer,
+            "cyscore": ComplexCyscoreFeaturizer,
         }
         self.descriptors = []
         self.featurizers = {}
-        self.dtype = bool
+        self.dtype = np.float32
         for ftype, fparams in descriptor_sets.items():
             ftype = ftype.lower()
             if ftype in str2cls_map:
@@ -287,7 +298,7 @@ class MetaComplexDescriptors(ParallelComplexFeaturizer):
                     logger.error(message)
                     raise ValueError(message)
                     features_subset = None
-            elif featurizer_name in ["dcdmpnn", "ccdmpnn"]:
+            elif featurizer_name in ["dcdmpnn", "ccdmpnn", "smina", "xscore", "rfscore", "cyscore"]:
                 features_subset = featurizer.featurize([datapoint])[0]
             else:
                 features_subset = self.calc_descriptors(featurizer_name, datapoint[0], datapoint[1])

@@ -2415,7 +2415,10 @@ class DiskDataset(Dataset):
         if self._cached_shards is not None and self._cached_shards[i] is not None:
             return self._cached_shards[i].y
         row = self.metadata_df.iloc[i]
-        return np.array(load_from_disk(os.path.join(self.data_dir, row["y"])))
+        y = np.array(load_from_disk(os.path.join(self.data_dir, row["y"])))
+        if self._y_idxs is not None:
+            y = y[:, self._y_idxs]
+        return y
 
     def get_shard_w(self, i: int) -> np.ndarray:
         """Retrieves the weights for the i-th shard from disk.
@@ -2434,7 +2437,10 @@ class DiskDataset(Dataset):
         if self._cached_shards is not None and self._cached_shards[i] is not None:
             return self._cached_shards[i].w
         row = self.metadata_df.iloc[i]
-        return np.array(load_from_disk(os.path.join(self.data_dir, row["w"])))
+        w = np.array(load_from_disk(os.path.join(self.data_dir, row["w"])))
+        if self._y_idxs is not None:
+            w = w[:, self._y_idxs]
+        return w
 
     def add_shard(
         self,
