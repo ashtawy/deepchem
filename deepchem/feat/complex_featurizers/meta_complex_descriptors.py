@@ -197,7 +197,7 @@ class MetaComplexDescriptors(ParallelComplexFeaturizer):
             "binana": {},
             "dcdmpnn": {"distance_threshold": 6, "distance_step_size": 0.25, "discrete_distance_filter":True},
             "ccdmpnn": {"distance_threshold": 6, "distance_step_size": 0.25, "discrete_distance_filter":False},
-            "smina": {"smina_executable_path": SMINA_PATH},
+            "smina": {},
 
         }
         str2cls_map = {
