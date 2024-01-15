@@ -78,6 +78,7 @@ setup(
         "scikit-learn",
         "scipy<1.9",
         "rdkit",
+        "meeko"
     ],
     extras_require=extras,
     python_requires=">=3.7,<3.11",
