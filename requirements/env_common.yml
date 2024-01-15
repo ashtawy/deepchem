@@ -8,6 +8,7 @@ dependencies:
   - pip
   - pip:
     - numpy
+    - meeko
     - rdkit-pypi
     - mdtraj
     - pre-commit
